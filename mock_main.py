@@ -3,9 +3,9 @@
 import pandas as pd
 
 
-pd.set_option("display.max_colwidth", 100)
-pd.set_option("display.max_columns", 20)
-pd.set_option("display.max_rows", 1000)
+pd.set_option("display.max_colwidth", None)
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
 
 import numpy as np
 #import seaborn as sns
@@ -139,6 +139,10 @@ for i in range(0, learning_span):
     numpy_list.append(tmp)
     normalization_list.append(normalization_tmp)
     right_data_list.append(right_data)
+
+numpy_list.reverse()
+normalization_list.reverse()
+right_data_list.reverse()
 
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
