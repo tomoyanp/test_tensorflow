@@ -119,7 +119,7 @@ connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
 window_size = 30
-learning_span = 10
+learning_span = 30
 
 numpy_list = []
 normalization_list = []
@@ -158,6 +158,13 @@ print(normalization_list)
 print(numpy_list.shape)
 print(right_data_list.shape)
 print(normalization_list.shape)
+
+
+
+np.random_seed(202)
+model = build_model(normalization_list, output_size=1, neurons=20)
+history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1, verbose=2, shuffle=True)
+
 
 #file = open("result.txt", "w")
 #file.write(numpy_list)
