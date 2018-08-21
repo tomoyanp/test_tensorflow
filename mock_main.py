@@ -120,6 +120,7 @@ for i in range(0, learning_span):
     normalization_tmp = df.copy()
     tmp = df.copy()
     del normalization_tmp["time"]
+    normalization_tmp = normalization_tmp * 100
     print(type(normalization_tmp))
     print(type(tmp))
 
