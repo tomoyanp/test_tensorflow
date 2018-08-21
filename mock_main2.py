@@ -105,7 +105,7 @@ def getDailyIndicator(base_time, con, span):
     df["start"] = start_price_list
     df["sma1d20"] = sma1d20_list
 
-    return df, right_data
+    return df
     
 
 
@@ -113,7 +113,7 @@ connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
 window_size = 30
-learning_span = 30
+learning_span = 300
 
 numpy_list = []
 normalization_list = []
