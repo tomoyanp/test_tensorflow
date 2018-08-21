@@ -1,9 +1,15 @@
 # coding: utf-8
 
 import pandas as pd
+
+
+pd.set_option("display.max_colwidth", 100)
+pd.set_option("display.max_columns", 20)
+pd.set_option("display.max_rows", 1000)
+
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+#import seaborn as sns
+#import matplotlib.pyplot as plt
 import oandapy
 import configparser
 import datetime
@@ -102,8 +108,10 @@ base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
 span = 5
 
-df = getDailyIndicator(base_time, con, span)
-print df
+df = getDailyIndicator(base_time, connector, span)
+
+
+print(df)
 
 numpy_list = df.values
 

@@ -17,7 +17,6 @@ def account_init(mode, base_path):
     property_path = "%s/property" % base_path
     property_file = open("%s/account.properties" % property_path, "r")
     jsonData = json.load(property_file)
-    print jsonData
     account_data = jsonData[mode]
     return account_data
 
@@ -156,7 +155,6 @@ def getSlope(target_list):
 
     price_list = np.array(target_list)
     index_list = np.array(index_list)
-    #print index_list
 
     z = np.polyfit(index_list, price_list, 1)
     slope, intercept = np.poly1d(z)
@@ -183,7 +181,6 @@ def getSlope(target_list):
 #
 #    price_list = np.array(target_list)
 #    index_list = np.array(index_list)
-#    #print index_list
 #
 #    z = np.polyfit(index_list, price_list, 1)
 #    slope, intercept = np.poly1d(z)
@@ -206,8 +203,6 @@ def countIndex(index, candle_width):
 def sleepTransaction(sleep_time, test_mode, base_time):
     sleep_time = int(sleep_time)
     if test_mode:
-        print "NO SLEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEP"
-        print "SLEEP TIME = %s" % sleep_time
         base_time = base_time + timedelta(seconds=sleep_time)
     else:
         time.sleep(sleep_time)
