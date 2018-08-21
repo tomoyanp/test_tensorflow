@@ -3,11 +3,14 @@
 import pandas as pd
 
 
-pd.set_option("display.max_colwidth", None)
+pd.set_option("display.max_colwidth", 1000)
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 import numpy as np
+
+np.set_printoptions(threshold=np.inf)
+
 #import seaborn as sns
 #import matplotlib.pyplot as plt
 import oandapy
