@@ -21,6 +21,8 @@ from keras.layers import Activation, Dense
 from keras.layers import LSTM
 from keras.layers import Dropout
 
+from sklearn.preprocessing import MinMaxScaler
+
 import json
 
 from get_indicator import getBollingerWrapper
@@ -110,16 +112,24 @@ window_size = 5
 learning_span = 10
 
 numpy_list = []
+normalization_list = []
+scaler = MinMaxScaler(featuer_range=(-1, 1))
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
     tmp = df.values
+    normalization_tmp = df.copy
+    del normalization_tmp["time"]
+
+    normalization_tmp = scaler.fit_transform(normalization_tmp)
+
     print(tmp)
     numpy_list.append(tmp)
-#    numpy_list = np.vstack((numpy_list, tmp))
+    normalization_list.append(normalization_tmp)
 
 numpy_list = np.array(numpy_list)
+normalization_list = np.array(normalization_list)
 print(numpy_list)
-print(numpy_list.shape)
+print(normalization_list)
 #numpy_list = df.values
 #print numpy_list
