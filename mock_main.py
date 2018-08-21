@@ -109,13 +109,17 @@ base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
 window_size = 5
 learning_span = 10
 
-numpy_list = np.array([])
-for i in range(0, i)
+numpy_list = []
+for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
     tmp = df.values
-    numpy_list = np.vstack(numpy_list, tmp)
+    print(tmp)
+    numpy_list.append(tmp)
+#    numpy_list = np.vstack((numpy_list, tmp))
 
-print numpy_list
+numpy_list = np.array(numpy_list)
+print(numpy_list)
+print(numpy_list.shape)
 #numpy_list = df.values
 #print numpy_list
