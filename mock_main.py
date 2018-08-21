@@ -108,7 +108,7 @@ def getDailyIndicator(base_time, con, span):
 connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
-window_size = 5
+window_size = 30
 learning_span = 10
 
 numpy_list = []
@@ -120,28 +120,28 @@ for i in range(0, learning_span):
     normalization_tmp = df.copy()
     tmp = df.copy()
     del normalization_tmp["time"]
-    normalization_tmp = normalization_tmp * 100
-    print(type(normalization_tmp))
-    print(type(tmp))
+    #normalization_tmp = normalization_tmp * 10000
+    #print(type(normalization_tmp))
+    #print(type(tmp))
 
     tmp = tmp.values
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
-    print(tmp)
+    #print(tmp)
     numpy_list.append(tmp)
     normalization_list.append(normalization_tmp)
 
 numpy_list = np.array(numpy_list)
 print(numpy_list)
 normalization_list = np.array(normalization_list)
-print(normalization_list)
+print(normalization_list.shape)
 
 #file = open("result.txt", "w")
 #file.write(numpy_list)
 #file.write("\n==============================================\n")
 #file.write(normalization_list)
 
-file.close()
+#file.close()
 #numpy_pd = pd.DataFrame(numpy_list)
 #normalization_pd = pd.DataFrame(normalization_list)
 #print(numpy_pd)
