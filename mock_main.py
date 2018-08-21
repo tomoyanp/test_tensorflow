@@ -62,9 +62,10 @@ def date_string(date):
 def getDailyIndicator(base_time, con, span):
     ### get daily dataset
     instrument = "GBP_JPY"
-    target_time = base_time - timedelta(days=1)
+    target_time = base_time - timedelta(days=2)
     sql = "select max_price, min_price, start_price, end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, span) 
     response = con.select_sql(sql)
+
     max_price_list = []
     min_price_list = []
     start_price_list = []
@@ -94,14 +95,20 @@ def getDailyIndicator(base_time, con, span):
 
     df = pd.DataFrame([])
 
+    df["end"] = end_price_list
     df["time"] = time_list
     df["max"] = max_price_list
     df["min"] = min_price_list
     df["start"] = start_price_list
-    df["end"] = end_price_list
     df["sma1d20"] = sma1d20_list
 
-    return df
+
+    target_time = base_time - timedelta(days=1)
+    sql = "select end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit 1" % (instrument, "day", target_time) 
+    response = con.select_sql(sql)
+    right_data = response[0][0]
+
+    return df, right_data
     
 
 
@@ -113,10 +120,11 @@ learning_span = 10
 
 numpy_list = []
 normalization_list = []
+right_data_list = []
 scaler = MinMaxScaler(feature_range=(0, 1))
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
-    df = getDailyIndicator(tmp_time, connector, window_size)
+    df, right_data = getDailyIndicator(tmp_time, connector, window_size)
     normalization_tmp = df.copy()
     tmp = df.copy()
     del normalization_tmp["time"]
@@ -130,10 +138,18 @@ for i in range(0, learning_span):
     #print(tmp)
     numpy_list.append(tmp)
     normalization_list.append(normalization_tmp)
+    right_data_list.append(right_data)
 
 numpy_list = np.array(numpy_list)
-print(numpy_list)
 normalization_list = np.array(normalization_list)
+right_data_list = np.array(right_data_list)
+
+print(numpy_list)
+print(right_data_list)
+print(normalization_list)
+
+print(numpy_list.shape)
+print(right_data_list.shape)
 print(normalization_list.shape)
 
 #file = open("result.txt", "w")
