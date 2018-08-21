@@ -106,13 +106,16 @@ def getDailyIndicator(base_time, con, span):
 connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
-span = 5
+window_size = 5
+learning_span = 10
 
-df = getDailyIndicator(base_time, connector, span)
+numpy_list = np.array([])
+for i in range(0, i)
+    tmp_time = base_time - timedelta(days=i)
+    df = getDailyIndicator(tmp_time, connector, window_size)
+    tmp = df.values
+    numpy_list = np.vstack(numpy_list, tmp)
 
-
-print(df)
-
-numpy_list = df.values
-
+print numpy_list
+#numpy_list = df.values
 #print numpy_list
