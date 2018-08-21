@@ -113,14 +113,17 @@ learning_span = 10
 
 numpy_list = []
 normalization_list = []
-scaler = MinMaxScaler(featuer_range=(-1, 1))
+scaler = MinMaxScaler(feature_range=(0, 1))
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
-    tmp = df.values
-    normalization_tmp = df.copy
+    normalization_tmp = df.copy()
+    tmp = df.copy()
     del normalization_tmp["time"]
+    print(type(normalization_tmp))
+    print(type(tmp))
 
+    tmp = tmp.values
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
     print(tmp)
@@ -128,8 +131,20 @@ for i in range(0, learning_span):
     normalization_list.append(normalization_tmp)
 
 numpy_list = np.array(numpy_list)
-normalization_list = np.array(normalization_list)
 print(numpy_list)
+normalization_list = np.array(normalization_list)
 print(normalization_list)
+
+#file = open("result.txt", "w")
+#file.write(numpy_list)
+#file.write("\n==============================================\n")
+#file.write(normalization_list)
+
+file.close()
+#numpy_pd = pd.DataFrame(numpy_list)
+#normalization_pd = pd.DataFrame(normalization_list)
+#print(numpy_pd)
+#print(normalization_pd)
+
 #numpy_list = df.values
 #print numpy_list
