@@ -123,6 +123,8 @@ right_data_list = []
 
 scaler = MinMaxScaler(feature_range=(0, 1))
 min_list = []
+max_list = []
+original_list = []
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
@@ -135,7 +137,12 @@ for i in range(0, learning_span):
 
     tmp = tmp.values
     min_price = min(normalization_tmp["end"])
+    max_price = max(normalization_tmp["end"])
     min_list.append(min_price)
+    max_list.append(max_price)
+    original_price = np.array(normalization_tmp)[-1][0]
+    original_list.append(original_price)
+
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
     #print(tmp)
@@ -147,6 +154,7 @@ for i in range(0, learning_span):
 numpy_list.reverse()
 normalization_list.reverse()
 right_data_list.reverse()
+original_list.reverse()
 
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
@@ -169,8 +177,11 @@ history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1
 train_predict = model.predict(normalization_list)
 
 for i in range(len(train_predict)):
-    print((train_predict[i]+1)*min_list[i])
-    print((right_data_list[i]+1)*min_list[i])
+#    print((train_predict[i]+1)*min_list[i])
+#    print((right_data_list[i]+1)*min_list[i])
+    print((train_predict[i]*(max_list[i]-min_list[i]))+min_list[i])
+    print((right_data_list[i]*(max_list[i]-min_list[i]))+min_list[i])
+    print(original_list[i])
     print("===================================")
 
 

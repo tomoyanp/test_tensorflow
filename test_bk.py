@@ -11,8 +11,8 @@ import numpy as np
 
 np.set_printoptions(threshold=np.inf)
 
-#import seaborn as sns
-#import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
 import oandapy
 import configparser
 import datetime
@@ -123,11 +123,15 @@ right_data_list = []
 
 scaler = MinMaxScaler(feature_range=(0, 1))
 min_list = []
+max_list = []
+original_list = []
+time_list = []
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
     normalization_tmp = df.copy()
     tmp = df.copy()
+    time_list.append(normalization_tmp["time"][-1])
     del normalization_tmp["time"]
     #normalization_tmp = normalization_tmp * 10000
     #print(type(normalization_tmp))
@@ -135,7 +139,12 @@ for i in range(0, learning_span):
 
     tmp = tmp.values
     min_price = min(normalization_tmp["end"])
+    max_price = max(normalization_tmp["end"])
     min_list.append(min_price)
+    max_list.append(max_price)
+    original_price = np.array(normalization_tmp)[-1][0]
+    original_list.append(original_price)
+
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
     #print(tmp)
@@ -144,9 +153,13 @@ for i in range(0, learning_span):
     right_data_list.append(normalization_tmp[-1][0])
 #    right_data_list.append(normalization_tmp[-1])
 
+time_list.reverse()
 numpy_list.reverse()
 normalization_list.reverse()
 right_data_list.reverse()
+original_list.reverse()
+max_list.reverse()
+min_list.reverse()
 
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
@@ -168,10 +181,23 @@ history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1
 
 train_predict = model.predict(normalization_list)
 
+paint_predict = []
+paint_right = []
 for i in range(len(train_predict)):
-    print((train_predict[i]+1)*min_list[i])
-    print((right_data_list[i]+1)*min_list[i])
-    print("===================================")
+#    print((train_predict[i]+1)*min_list[i])
+#    print((right_data_list[i]+1)*min_list[i])
+    paint_predict.append((train_predict[i]*(max_list[i]-min_list[i]))+min_list[i])
+    paint_right.append((right_data_list[i]*(max_list[i]-min_list[i]))+min_list[i])
+#    print(original_list[i])
+#    print("===================================")
+
+### paint predict train data
+fig, ax1 = plt.subplots(1,1)
+ax1.plot(time_list, paint_predict, label="Predict", color="blue")
+ax1.plot(time_list, paint_right, label="Actual", color="red")
+
+
+
 
 
 #train_predict = scaler.inverse_transform(train_predict)
