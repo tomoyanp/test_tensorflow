@@ -115,35 +115,38 @@ def getDataSet(base_time, con, window_size, learning_span):
 
     instrument = "GBP_JPY"
     target_time = base_time - timedelta(days=1)
-    sql = "select max_price, min_price, start_price, end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
+    sql = "select max_price, min_price, start_price, end_price, insert_time from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
     response = con.select_sql(sql)
 
     max_price_list = []
     min_price_list = []
     start_price_list = []
     end_price_list = []
+    time_list = []
     for res in response:
         max_price_list.append(res[0])
         min_price_list.append(res[1])
         start_price_list.append(res[2])
         end_price_list.append(res[3])
+        time_list.append(res[4])
 
     max_price_list.reverse()
     min_price_list.reverse()
     start_price_list.reverse()
     end_price_list.reverse()
+    time_list.reverse()
     
     sma1d20_list = []
-    time_list = []
-
-    for i in range(0, length):
+    while len(end_price_list) != len(sma1d20_list):
         tmp_time = target_time - timedelta(days=i)
         dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
-        sma1d20_list.append(dataset["base_lines"][-1])
-        time_list.append(tmp_time)
+        try:
+            sma1d20_list.append(dataset["base_lines"][-1])
+            time_list.append(tmp_time)
+        except Exception as e:
+            pass
 
     sma1d20_list.reverse()
-    time_list.reverse()
 
     dataset = {"end": end_price_list,
                "start": start_price_list,
