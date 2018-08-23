@@ -151,7 +151,7 @@ def getDataSet(base_time, con, window_size, learning_span):
         print(len(end_price_list))
         print(len(sma1d20_list))
 
-    #sma1d20_list.reverse()
+    sma1d20_list.reverse()
 
     dataset = {"end": end_price_list,
                "start": start_price_list,
@@ -162,7 +162,6 @@ def getDataSet(base_time, con, window_size, learning_span):
 
 
     df = pd.DataFrame([])
-
     df["end"] = end_price_list
     df["time"] = time_list
     df["max"] = max_price_list
@@ -241,6 +240,7 @@ train_predict = model.predict(input_train_data)
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
+    print(time_list[i])
     paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
     print((train_predict[i]*(max_price-min_price))+min_price)
     paint_right.append((output_train_data[i]*(max_price-min_price))+min_price)
