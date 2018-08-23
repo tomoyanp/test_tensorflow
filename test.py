@@ -160,11 +160,11 @@ input_train_data = []
 output_train_data = []
 time_list = []
 
-for i in range(0, learning_span):
+for i in range(window_size, learning_span):
 
     temp = []
     temp_index = 0
-    for k in range(i, (i+window_size)):
+    for k in range(i, (i-window_size)):
         temp.append(normalization_list[k].copy())
         temp_index = k
         
