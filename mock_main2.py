@@ -105,7 +105,7 @@ def getDailyIndicator(base_time, con, span):
     df["start"] = start_price_list
     df["sma1d20"] = sma1d20_list
 
-    return df, right_data
+    return df
     
 
 
@@ -113,12 +113,18 @@ connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
 base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
 window_size = 30
-learning_span = 30
+learning_span = 300
 
+#window_size = 10
+#learning_span = 10
 numpy_list = []
 normalization_list = []
 right_data_list = []
+
 scaler = MinMaxScaler(feature_range=(0, 1))
+min_list = []
+max_list = []
+original_list = []
 for i in range(0, learning_span):
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
@@ -130,16 +136,25 @@ for i in range(0, learning_span):
     #print(type(tmp))
 
     tmp = tmp.values
+    min_price = min(normalization_tmp["end"])
+    max_price = max(normalization_tmp["end"])
+    min_list.append(min_price)
+    max_list.append(max_price)
+    original_price = np.array(normalization_tmp)[-1][0]
+    original_list.append(original_price)
+
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
     #print(tmp)
     numpy_list.append(tmp)
     normalization_list.append(normalization_tmp[:-1])
     right_data_list.append(normalization_tmp[-1][0])
+#    right_data_list.append(normalization_tmp[-1])
 
 numpy_list.reverse()
 normalization_list.reverse()
 right_data_list.reverse()
+original_list.reverse()
 
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
@@ -159,6 +174,19 @@ np.random.seed(202)
 model = build_model(normalization_list, output_size=1, neurons=20)
 history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
+train_predict = model.predict(normalization_list)
+
+for i in range(len(train_predict)):
+#    print((train_predict[i]+1)*min_list[i])
+#    print((right_data_list[i]+1)*min_list[i])
+    print((train_predict[i]*(max_list[i]-min_list[i]))+min_list[i])
+    print((right_data_list[i]*(max_list[i]-min_list[i]))+min_list[i])
+    print(original_list[i])
+    print("===================================")
+
+
+#train_predict = scaler.inverse_transform(train_predict)
+#print(train_predict)
 
 #file = open("result.txt", "w")
 #file.write(numpy_list)

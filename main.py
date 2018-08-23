@@ -2,8 +2,8 @@
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
+#import seaborn as sns
+#import matplotlib.pyplot as plt
 import oandapy
 import configparser
 import datetime
@@ -186,41 +186,10 @@ yen_history = yen_model.fit(train_lstm_in, train_lstm_out, epochs=50, batch_size
 
 
 ### paint predict train data
-fig, ax1 = plt.subplots(1,1)
-ax1.plot(df["time"][window_len:].astype(datetime), train["closeAsk"][window_len:], label="Actual", color="blue")
-ax1.plot(df["time"][window_len:].astype(datetime), ((np.transpose(yen_model.predict(train_lstm_in))+1) * train["closeAsk"].values[:-window_len])[0], label="Actual", color="blue")
+#fig, ax1 = plt.subplots(1,1)
+#ax1.plot(df["time"][window_len:].astype(datetime), train["closeAsk"][window_len:], label="Actual", color="blue")
+#ax1.plot(df["time"][window_len:].astype(datetime), ((np.transpose(yen_model.predict(train_lstm_in))+1) * train["closeAsk"].values[:-window_len])[0], label="Actual", color="blue")
 
 
-
-def getDailyIndicator(base_time, con, span):
-    ### get daily dataset
-    instrument = "GBP_JPY"
-    target_time = base_time - timedelta(days=1)
-    sql = "select max_price, min_price, start_price, end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, span) 
-    response = con.select_sql(sql)
-    max_price_list = []
-    min_price_list = []
-    start_price_list = []
-    end_price_list = []
-    for res in response:
-        max_price_list.append(res[0])
-        min_price_list.append(res[1])
-        start_price_list.append(res[2])
-        end_price_list.append(res[3])
-
-    max_price_list.reverse()
-    min_price_list.reverse()
-    start_price_list.reverse()
-    end_price_list.reverse()
-    
-    sma1d20_list = []
-    time_list = []
-
-    for i in range(0, span):
-        tmp_time = target_time - timedelta(days=i)
-        dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
-        sma1d20_list.append(dataset["base_lines"][-1])
-        time_list.append(tmp_time)
-    
 
 

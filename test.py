@@ -11,8 +11,8 @@ import numpy as np
 
 np.set_printoptions(threshold=np.inf)
 
-#import seaborn as sns
-#import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
 import oandapy
 import configparser
 import datetime
@@ -108,6 +108,62 @@ def getDailyIndicator(base_time, con, span):
     return df
     
 
+def getDataSet(base_time, con, window_size, learning_span):
+    ### get daily dataset
+
+    length = window_size * learning_span
+
+    instrument = "GBP_JPY"
+    target_time = base_time - timedelta(days=1)
+    sql = "select max_price, min_price, start_price, end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
+    response = con.select_sql(sql)
+
+    max_price_list = []
+    min_price_list = []
+    start_price_list = []
+    end_price_list = []
+    for res in response:
+        max_price_list.append(res[0])
+        min_price_list.append(res[1])
+        start_price_list.append(res[2])
+        end_price_list.append(res[3])
+
+    max_price_list.reverse()
+    min_price_list.reverse()
+    start_price_list.reverse()
+    end_price_list.reverse()
+    
+    sma1d20_list = []
+    time_list = []
+
+    for i in range(0, length):
+        tmp_time = target_time - timedelta(days=i)
+        dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
+        sma1d20_list.append(dataset["base_lines"][-1])
+        time_list.append(tmp_time)
+
+    sma1d20_list.reverse()
+    time_list.reverse()
+
+    dataset = {"end": end_price_list,
+               "start": start_price_list,
+               "max": max_price_list,
+               "min": min_price_list,
+               "sma1d20": sma1d20_list,
+               "time": time_list}
+
+
+    df = pd.DataFrame([])
+
+    df["end"] = end_price_list
+    df["time"] = time_list
+    df["max"] = max_price_list
+    df["min"] = min_price_list
+    df["start"] = start_price_list
+    df["sma1d20"] = sma1d20_list
+
+    return dataset, df
+ 
 
 connector = MysqlConnector()
 base_time = "2018-08-01 00:00:00"
@@ -123,11 +179,37 @@ right_data_list = []
 
 scaler = MinMaxScaler(feature_range=(0, 1))
 min_list = []
+max_list = []
+original_list = []
+time_list = []
+
+
+dataset, df = getDataSet(base_time, connector, window_size, learning_span)
+
+np_list = df.values
+normalization_list = scaler.fit_transform(np_list)
+
+input_train_data = []
+output_train_data = []
+
 for i in range(0, learning_span):
+
+    temp = []
+    temp_index
+    for k in range(1, window_size+1):
+        temp.append(normalization_list[i*k].copy())
+        tem_index = k
+        
+
+    input_train_data.append(input_train_data)
+    output_train_data.append(dataset["end"][i*(temp_index+1)])
+    
+
     tmp_time = base_time - timedelta(days=i)
     df = getDailyIndicator(tmp_time, connector, window_size)
     normalization_tmp = df.copy()
     tmp = df.copy()
+    time_list.append(normalization_tmp["time"][-1])
     del normalization_tmp["time"]
     #normalization_tmp = normalization_tmp * 10000
     #print(type(normalization_tmp))
@@ -135,7 +217,12 @@ for i in range(0, learning_span):
 
     tmp = tmp.values
     min_price = min(normalization_tmp["end"])
+    max_price = max(normalization_tmp["end"])
     min_list.append(min_price)
+    max_list.append(max_price)
+    original_price = np.array(normalization_tmp)[-1][0]
+    original_list.append(original_price)
+
     normalization_tmp = scaler.fit_transform(normalization_tmp)
 
     #print(tmp)
@@ -144,9 +231,13 @@ for i in range(0, learning_span):
     right_data_list.append(normalization_tmp[-1][0])
 #    right_data_list.append(normalization_tmp[-1])
 
+time_list.reverse()
 numpy_list.reverse()
 normalization_list.reverse()
 right_data_list.reverse()
+original_list.reverse()
+max_list.reverse()
+min_list.reverse()
 
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
@@ -168,10 +259,23 @@ history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1
 
 train_predict = model.predict(normalization_list)
 
+paint_predict = []
+paint_right = []
 for i in range(len(train_predict)):
-    print((train_predict[i]+1)*min_list[i])
-    print((right_data_list[i]+1)*min_list[i])
-    print("===================================")
+#    print((train_predict[i]+1)*min_list[i])
+#    print((right_data_list[i]+1)*min_list[i])
+    paint_predict.append((train_predict[i]*(max_list[i]-min_list[i]))+min_list[i])
+    paint_right.append((right_data_list[i]*(max_list[i]-min_list[i]))+min_list[i])
+#    print(original_list[i])
+#    print("===================================")
+
+### paint predict train data
+fig, ax1 = plt.subplots(1,1)
+ax1.plot(time_list, paint_predict, label="Predict", color="blue")
+ax1.plot(time_list, paint_right, label="Actual", color="red")
+
+
+
 
 
 #train_predict = scaler.inverse_transform(train_predict)

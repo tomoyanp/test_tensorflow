@@ -147,6 +147,7 @@ numpy_list.reverse()
 normalization_list.reverse()
 right_data_list.reverse()
 
+right_data_list = scaler.fit_transform(right_data_list)
 numpy_list = np.array(numpy_list)
 normalization_list = np.array(normalization_list)
 right_data_list = np.array(right_data_list)
@@ -161,7 +162,7 @@ print(normalization_list.shape)
 
 
 
-np.random_seed(202)
+np.random.seed(202)
 model = build_model(normalization_list, output_size=1, neurons=20)
 history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
