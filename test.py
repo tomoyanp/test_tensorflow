@@ -62,61 +62,16 @@ def date_string(date):
     return date.strftime('%Y/%m/%d %H:%M:%S')
 
 
-def getDailyIndicator(base_time, con, span):
-    ### get daily dataset
-    instrument = "GBP_JPY"
-    target_time = base_time - timedelta(days=1)
-    sql = "select max_price, min_price, start_price, end_price from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, span) 
-    response = con.select_sql(sql)
-
-    max_price_list = []
-    min_price_list = []
-    start_price_list = []
-    end_price_list = []
-    for res in response:
-        max_price_list.append(res[0])
-        min_price_list.append(res[1])
-        start_price_list.append(res[2])
-        end_price_list.append(res[3])
-
-    max_price_list.reverse()
-    min_price_list.reverse()
-    start_price_list.reverse()
-    end_price_list.reverse()
-    
-    sma1d20_list = []
-    time_list = []
-
-    for i in range(0, span):
-        tmp_time = target_time - timedelta(days=i)
-        dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
-        sma1d20_list.append(dataset["base_lines"][-1])
-        time_list.append(tmp_time)
-
-    sma1d20_list.reverse()
-    time_list.reverse()
-
-    df = pd.DataFrame([])
-
-    df["end"] = end_price_list
-    df["time"] = time_list
-    df["max"] = max_price_list
-    df["min"] = min_price_list
-    df["start"] = start_price_list
-    df["sma1d20"] = sma1d20_list
-
-    return df
-    
-
-def getDataSet(base_time, con, window_size, learning_span):
+def getDataSet(base_time, con, window_size, learning_span, output_train_index):
     ### get daily dataset
 
-    length = window_size * learning_span
+    length = learning_span + output_train_index
 
     instrument = "GBP_JPY"
     target_time = base_time - timedelta(days=1)
     sql = "select max_price, min_price, start_price, end_price, insert_time from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
     response = con.select_sql(sql)
+    print(sql)
 
     max_price_list = []
     min_price_list = []
@@ -190,7 +145,8 @@ original_list = []
 time_list = []
 
 
-dataset, df = getDataSet(base_time, connector, window_size, learning_span)
+output_train_index = 1
+dataset, df = getDataSet(base_time, connector, window_size, learning_span, output_train_index)
 
 del df["time"]
 np_list = df.values
@@ -204,7 +160,7 @@ input_train_data = []
 output_train_data = []
 time_list = []
 
-for i in range(0, learning_span-1):
+for i in range(0, learning_span):
 
     temp = []
     temp_index = 0
@@ -215,8 +171,8 @@ for i in range(0, learning_span-1):
         
     input_train_data.append(temp)
     try:
-        output_train_data.append(normalization_list[temp_index+1][0].copy())
-        time_list.append(dataset["time"][temp_index+1])
+        output_train_data.append(normalization_list[temp_index+output_train_index][0].copy())
+        time_list.append(dataset["time"][temp_index+output_train_index])
     except Exception as e:
         pass
 
