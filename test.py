@@ -188,9 +188,12 @@ dataset, df = getDataSet(base_time, connector, window_size, learning_span)
 
 np_list = df.values
 normalization_list = scaler.fit_transform(np_list)
+max_price = max(dataset["end"])
+min_price = min(dataset["end"])
 
 input_train_data = []
 output_train_data = []
+time_list = []
 
 for i in range(0, learning_span):
 
@@ -200,83 +203,30 @@ for i in range(0, learning_span):
         temp.append(normalization_list[i*k].copy())
         tem_index = k
         
-
     input_train_data.append(input_train_data)
     output_train_data.append(dataset["end"][i*(temp_index+1)])
-    
+    time_list.append(dataset["time"][i*(temp_index+1)])
 
-    tmp_time = base_time - timedelta(days=i)
-    df = getDailyIndicator(tmp_time, connector, window_size)
-    normalization_tmp = df.copy()
-    tmp = df.copy()
-    time_list.append(normalization_tmp["time"][-1])
-    del normalization_tmp["time"]
-    #normalization_tmp = normalization_tmp * 10000
-    #print(type(normalization_tmp))
-    #print(type(tmp))
-
-    tmp = tmp.values
-    min_price = min(normalization_tmp["end"])
-    max_price = max(normalization_tmp["end"])
-    min_list.append(min_price)
-    max_list.append(max_price)
-    original_price = np.array(normalization_tmp)[-1][0]
-    original_list.append(original_price)
-
-    normalization_tmp = scaler.fit_transform(normalization_tmp)
-
-    #print(tmp)
-    numpy_list.append(tmp)
-    normalization_list.append(normalization_tmp[:-1])
-    right_data_list.append(normalization_tmp[-1][0])
-#    right_data_list.append(normalization_tmp[-1])
-
-time_list.reverse()
-numpy_list.reverse()
-normalization_list.reverse()
-right_data_list.reverse()
-original_list.reverse()
-max_list.reverse()
-min_list.reverse()
-
-numpy_list = np.array(numpy_list)
-normalization_list = np.array(normalization_list)
-right_data_list = np.array(right_data_list)
-
-print(numpy_list)
-print(right_data_list)
-print(normalization_list)
-
-print(numpy_list.shape)
-print(right_data_list.shape)
-print(normalization_list.shape)
-
-
+input_train_data = np.array(input_train_data)
+output_train_data = np.array(output_train_data)
+time_list = np.array(time_list)
 
 np.random.seed(202)
-model = build_model(normalization_list, output_size=1, neurons=20)
-history = model.fit(normalization_list, right_data_list, epochs=50, batch_size=1, verbose=2, shuffle=True)
+model = build_model(input_train_data, output_size=1, neurons=20)
+history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-train_predict = model.predict(normalization_list)
+train_predict = model.predict(input_train_list)
 
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
-#    print((train_predict[i]+1)*min_list[i])
-#    print((right_data_list[i]+1)*min_list[i])
-    paint_predict.append((train_predict[i]*(max_list[i]-min_list[i]))+min_list[i])
-    paint_right.append((right_data_list[i]*(max_list[i]-min_list[i]))+min_list[i])
-#    print(original_list[i])
-#    print("===================================")
+    paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
+    paint_right.append((output_train_data[i]*(max_price-min_price))+min_price)
 
 ### paint predict train data
-fig, ax1 = plt.subplots(1,1)
-ax1.plot(time_list, paint_predict, label="Predict", color="blue")
-ax1.plot(time_list, paint_right, label="Actual", color="red")
-
-
-
-
+#fig, ax1 = plt.subplots(1,1)
+#ax1.plot(time_list, paint_predict, label="Predict", color="blue")
+#ax1.plot(time_list, paint_right, label="Actual", color="red")
 
 #train_predict = scaler.inverse_transform(train_predict)
 #print(train_predict)
