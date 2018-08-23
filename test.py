@@ -137,16 +137,21 @@ def getDataSet(base_time, con, window_size, learning_span):
     time_list.reverse()
     
     sma1d20_list = []
+    i = 0
     while len(end_price_list) != len(sma1d20_list):
         tmp_time = target_time - timedelta(days=i)
         dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
         try:
             sma1d20_list.append(dataset["base_lines"][-1])
-            time_list.append(tmp_time)
         except Exception as e:
             pass
 
-    sma1d20_list.reverse()
+        i = i + 1
+
+        print(len(end_price_list))
+        print(len(sma1d20_list))
+
+    #sma1d20_list.reverse()
 
     dataset = {"end": end_price_list,
                "start": start_price_list,
@@ -180,7 +185,6 @@ numpy_list = []
 normalization_list = []
 right_data_list = []
 
-scaler = MinMaxScaler(feature_range=(0, 1))
 min_list = []
 max_list = []
 original_list = []
@@ -189,7 +193,10 @@ time_list = []
 
 dataset, df = getDataSet(base_time, connector, window_size, learning_span)
 
+del df["time"]
 np_list = df.values
+
+scaler = MinMaxScaler(feature_range=(0, 1))
 normalization_list = scaler.fit_transform(np_list)
 max_price = max(dataset["end"])
 min_price = min(dataset["end"])
@@ -198,33 +205,46 @@ input_train_data = []
 output_train_data = []
 time_list = []
 
-for i in range(0, learning_span):
+for i in range(0, learning_span-1):
 
     temp = []
-    temp_index
-    for k in range(1, window_size+1):
-        temp.append(normalization_list[i*k].copy())
-        tem_index = k
+    temp_index = 0
+    for k in range(i, (i+window_size)):
+        temp.append(normalization_list[k].copy())
+        temp_index = k
         
-    input_train_data.append(input_train_data)
-    output_train_data.append(dataset["end"][i*(temp_index+1)])
-    time_list.append(dataset["time"][i*(temp_index+1)])
+        
+    input_train_data.append(temp)
+    try:
+        output_train_data.append(normalization_list[temp_index+1][0].copy())
+        time_list.append(dataset["time"][temp_index+1])
+    except Exception as e:
+        pass
 
+#input_train_data = input_train_data[:-1]
 input_train_data = np.array(input_train_data)
 output_train_data = np.array(output_train_data)
 time_list = np.array(time_list)
+
+print(input_train_data)
+print(output_train_data)
+print(input_train_data.shape)
+print(output_train_data.shape)
+print(time_list.shape)
 
 np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
 history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-train_predict = model.predict(input_train_list)
+train_predict = model.predict(input_train_data)
 
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
     paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
+    print((train_predict[i]*(max_price-min_price))+min_price)
     paint_right.append((output_train_data[i]*(max_price-min_price))+min_price)
+    print((output_train_data[i]*(max_price-min_price))+min_price)
 
 ### paint predict train data
 #fig, ax1 = plt.subplots(1,1)
