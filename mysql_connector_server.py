@@ -5,7 +5,7 @@ from price_table_wrapper import PriceTableWrapper
 class MysqlConnector:
 
     def __init__(self):
-        self.hostname = '153.126.201.170'
+        self.hostname = 'localhost'
         self.dbname = 'oanda_db'
         self.username = 'tomoyan'
         self.password = 'tomoyan180'

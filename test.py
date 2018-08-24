@@ -12,6 +12,8 @@ import numpy as np
 np.set_printoptions(threshold=np.inf)
 
 import seaborn as sns
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import oandapy
 import configparser
@@ -204,10 +206,11 @@ for i in range(len(train_predict)):
     print((output_train_data[i]*(max_price-min_price))+min_price)
 
 ### paint predict train data
-#fig, ax1 = plt.subplots(1,1)
-#ax1.plot(time_list, paint_predict, label="Predict", color="blue")
-#ax1.plot(time_list, paint_right, label="Actual", color="red")
+fig, ax1 = plt.subplots(1,1)
+ax1.plot(time_list, paint_predict, label="Predict", color="blue")
+ax1.plot(time_list, paint_right, label="Actual", color="red")
 
+plt.savefig('figure.png')
 #train_predict = scaler.inverse_transform(train_predict)
 #print(train_predict)
 
