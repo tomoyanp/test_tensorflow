@@ -206,9 +206,17 @@ test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector
 # 正規化後はdropする
 tmp = test_value_dataset.copy()
 tmp = pd.DataFrame(tmp)
+index = 0
+for col in tmp:
+    max_list = max_list.rename(columns={str(index), col})
+    min_list = min_list.rename(columns={str(index), col})
+    index = index + 1
+
+
 tmp = tmp.append(max_list)
 tmp = tmp.append(min_list)
 
+print(tmp)
 test_value_dataset = change_to_normalization(tmp)
 input_test_data = test_value_dataset.iloc[:-2]
 
