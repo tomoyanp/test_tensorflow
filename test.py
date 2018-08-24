@@ -13,8 +13,9 @@ np.set_printoptions(threshold=np.inf)
 
 import seaborn as sns
 import matplotlib
-matplotlib.use('agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.switch_backend("agg")
 import oandapy
 import configparser
 import datetime
@@ -127,7 +128,8 @@ def getDataSet(base_time, con, window_size, learning_span, output_train_index):
     return original_dataset, value_dataset
 
 def change_to_normalization(dataset):
-    np_list = np.array(dataset)
+    tmp_df = pd.DataFrame(dataset)
+    np_list = np.array(tmp_df)
     scaler = MinMaxScaler(feature_range=(0, 1))
     normalization_list = scaler.fit_transform(np_list)
 
@@ -182,8 +184,8 @@ input_train_data, output_train_data, time_list = createDataset(value_dataset, wi
 # testデータの正規化のために、最大値と最小値を取得しておく
 max_list = []
 min_list = []
-max_price = max(value_dataset["end"])
-min_price = min(value_dataset["end"])
+max_price = max(original_dataset["end"])
+min_price = min(original_dataset["end"])
 
 df = pd.DataFrame(value_dataset)
 for col in df:
