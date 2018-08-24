@@ -69,7 +69,7 @@ def date_string(date):
 def getDataSet(base_time, con, window_size, learning_span, output_train_index):
     ### get daily dataset
 
-    length = learning_span + output_train_index
+    length = learning_span + window_size + output_train_index
 
     instrument = "GBP_JPY"
     target_time = base_time - timedelta(days=1)
@@ -135,7 +135,7 @@ def change_to_normalization(dataset):
 
     return normalization_list
 
- # 引数で与えられたndarrayをwindow_sizeで分割＋正規化して返す(ndarray)
+ # 引数で与えられたndarrayをwindow_sizeで分割して返す(ndarray)
 def createDataset(dataset, window_size, learning_span, output_train_index, output_flag):
     input_train_data = []
     output_train_data = []
@@ -167,9 +167,9 @@ def createDataset(dataset, window_size, learning_span, output_train_index, outpu
 
     return input_train_data, output_train_data, time_list
 
+
 def change_to_ptime(base_time):
     base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
-
 
     return base_time
 
@@ -210,9 +210,9 @@ tmp = tmp.append(max_list)
 tmp = tmp.append(min_list)
 
 test_value_dataset = change_to_normalization(tmp)
-test_value_dataset = test_value_dataset.iloc[:-2]
+input_test_data = test_value_dataset.iloc[:-2]
 
-input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
+#input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
 
 #print(input_train_data)
 #print(output_train_data)
@@ -242,6 +242,10 @@ ax1.plot(time_list, paint_predict, label="Predict", color="blue")
 ax1.plot(time_list, paint_right, label="Actual", color="red")
 
 plt.savefig('figure.png')
+
+
+print(train_predict)
+
 #train_predict = scaler.inverse_transform(train_predict)
 #print(train_predict)
 
