@@ -111,48 +111,53 @@ def getDataSet(base_time, con, window_size, learning_span, output_train_index):
 
     sma1d20_list.reverse()
 
-    dataset = {"end": end_price_list,
+    original_dataset = {"end": end_price_list,
                "start": start_price_list,
                "max": max_price_list,
                "min": min_price_list,
                "sma1d20": sma1d20_list,
                "time": time_list}
 
+    value_dataset = {"end": end_price_list,
+               "start": start_price_list,
+               "max": max_price_list,
+               "min": min_price_list,
+               "sma1d20": sma1d20_list}
 
-    df = pd.DataFrame([])
-#    df["end"] = end_price_list
-    df["time"] = time_list
-    df["max"] = max_price_list
-    df["min"] = min_price_list
-    df["start"] = start_price_list
-    df["sma1d20"] = sma1d20_list
+    return original_dataset, value_dataset
 
-    return dataset, df
+def change_to_normalization(dataset):
+    np_list = np.array(dataset)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    normalization_list = scaler.fit_transform(np_list)
 
- # 引数で与えられたDataFrameをwindow_sizeで分割＋正規化して返す
-def createDataset(df, window_size, learning_span):
+    return normalization_list
+
+ # 引数で与えられたndarrayをwindow_sizeで分割＋正規化して返す(ndarray)
+def createDataset(dataset, window_size, learning_span, output_train_index, output_flag):
     input_train_data = []
     output_train_data = []
     time_list = []
-    np_list = df.values
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    normalization_list = scaler.fit_transform(np_list)
     for i in range(window_size, learning_span+1):
 
         temp = []
         temp_index = 0
         for k in range((i-window_size), i):
-            temp.append(normalization_list[k].copy())
-            print(normalization_list[k])
+            temp.append(dataset[k].copy())
+            print(dataset[k])
             temp_index = k
 
 
         input_train_data.append(temp)
         try:
-            output_train_data.append(normalization_list[temp_index+output_train_index][0].copy())
-            time_list.append(dataset["time"][temp_index+output_train_index])
+            if output_flag:
+                output_train_data.append(dataset[temp_index+output_train_index][0].copy())
+                time_list.append(dataset["time"][temp_index+output_train_index])
+            else:
+                pass
+
         except Exception as e:
-        pass
+            pass
 
     input_train_data = np.array(input_train_data)
     output_train_data = np.array(output_train_data)
@@ -160,31 +165,52 @@ def createDataset(df, window_size, learning_span):
 
     return input_train_data, output_train_data, time_list
 
+def change_to_ptime(base_time):
+    base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
+
+
+    return base_time
+
 connector = MysqlConnector()
-train_base_time = "2018-07-01 00:00:00"
-train_base_time = datetime.strptime(train_base_time, "%Y-%m-%d %H:%M:%S")
 
-window_size = 30
-learning_span = 300
-
+train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 output_train_index = 1
-dataset, df = getDataSet(train_base_time, connector, window_size, learning_span, output_train_index)
-input_train_data, output_train_data, time_list = createDataset(df, window_size, learning_span)
+original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
+value_dataset = change_to_normalization(value_dataset)
+input_train_data, output_train_data, time_list = createDataset(value_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
 
-
+# testデータの正規化のために、最大値と最小値を取得しておく
 max_list = []
 min_list = []
-max_price = max(dataset["end"])
-min_price = min(dataset["end"])
+max_price = max(value_dataset["end"])
+min_price = min(value_dataset["end"])
 
-for col in dataset:
-    max_list.append(max(dataset[col]))
-    min_list.append(min(dataset[col]))
+df = pd.DataFrame(value_dataset)
+for col in df:
+    max_list.append(max(df[col]))
+    min_list.append(min(df[col]))
 
 max_list = pd.DataFrame(max_list)
 min_list = pd.DataFrame(min_list)
+
+# あとで行追加するので転置しておく
 max_list = max_list.T
 min_list = min_list.T
+
+test_base_time = change_to_ptime(base_time="2018-08-01 00:00:00")
+test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=0, output_train_index=0)
+
+# 訓練データの最大、最小値を追加して、正規化する
+# 正規化後はdropする
+tmp = test_value_dataset.copy()
+tmp = pd.DataFrame(tmp)
+tmp = tmp.append(max_list)
+tmp = tmp.append(min_list)
+
+test_value_dataset = change_to_normalization(tmp)
+test_value_dataset = test_value_dataset.iloc[:-2]
+
+input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
 
 #print(input_train_data)
 #print(output_train_data)
@@ -196,7 +222,7 @@ np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
 history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-train_predict = model.predict(input_train_data)
+train_predict = model.predict(input_test_data)
 
 paint_predict = []
 paint_right = []
@@ -207,9 +233,6 @@ for i in range(len(train_predict)):
     paint_right.append((output_train_data[i]*(max_price-min_price))+min_price)
     print((output_train_data[i]*(max_price-min_price))+min_price)
 
-
-test_base_time = "2018-08-01 00:00:00"
-test_base_time = datetime.strptime(test_base_time, "%Y-%m-%d %H:%M:%S")
 
 ### paint predict train data
 fig, ax1 = plt.subplots(1,1)
