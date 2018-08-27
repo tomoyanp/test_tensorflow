@@ -178,6 +178,8 @@ connector = MysqlConnector()
 train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 output_train_index = 1
 original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
+df = pd.DataFrame(value_dataset.copy())
+
 value_dataset = change_to_normalization(value_dataset)
 input_train_data, output_train_data, time_list = createDataset(value_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
 
@@ -187,7 +189,6 @@ min_list = []
 max_price = max(original_dataset["end"])
 min_price = min(original_dataset["end"])
 
-df = pd.DataFrame(value_dataset)
 for col in df:
     max_list.append(max(df[col]))
     min_list.append(min(df[col]))
@@ -207,16 +208,28 @@ test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector
 tmp = test_value_dataset.copy()
 tmp = pd.DataFrame(tmp)
 index = 0
-for col in tmp:
-    max_list = max_list.rename(columns={str(index), col})
-    min_list = min_list.rename(columns={str(index), col})
-    index = index + 1
 
 
-tmp = tmp.append(max_list)
-tmp = tmp.append(min_list)
+tmp = tmp.values
+max_list = max_list.values
+min_list = min_list.values
 
 print(tmp)
+print(len(tmp))
+
+print("#############################################")
+
+tmp = np.append(tmp, max_list)
+tmp = np.append(tmp, min_list)
+
+print(tmp)
+print(len(tmp))
+
+
+print("#############################################")
+
+print(max_list)
+
 test_value_dataset = change_to_normalization(tmp)
 input_test_data = test_value_dataset.iloc[:-2]
 
