@@ -170,11 +170,20 @@ def createDataset(dataset, window_size, learning_span, output_train_index, outpu
 
 def change_to_ptime(base_time):
     base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
-
     return base_time
 
-connector = MysqlConnector()
 
+def join_dataframe(sdf, ddf):
+    index = 0
+    for col in ddf:
+        sdf = sdf.rename(columns={index: col})
+        index = index + 1
+    
+    ddf = ddf.append(sdf, ignore_index=True)
+
+    return ddf
+
+connector = MysqlConnector()
 train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 output_train_index = 1
 original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
@@ -207,60 +216,20 @@ test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector
 # 正規化後はdropする
 tmp = test_value_dataset.copy()
 tmp = pd.DataFrame(tmp)
-index = 0
 
-dftmp = pd.DataFrame([])
-for col in tmp:
-    max_list = max_list.rename(columns={index: col})
-    min_list = min_list.rename(columns={index: col})
-    index = index + 1
-#    dftmp = dftmp.append(max_tmp) 
-#    dftmp = dftmp.append(min_tmp)
-
-print(max_list)
-print("####################################")
-print(min_list)
-
-tmp = tmp.append(max_list, ignore_index=True)
-tmp = tmp.append(min_list, ignore_index=True)
-print(tmp)
-#tmp = tmp.values
-#max_list = max_list.values
-#min_list = min_list.values
-
-#print("#############################################")
-#print(max_list)
-#print(len(tmp))
-
-
-#tmp = np.append(tmp, max_list)
-#tmp = np.append(tmp, min_list)
-
-#print(tmp)
-#print(len(tmp))
-
-
-#print("#############################################")
-
-#print(max_list)
+tmp = join_dataframe(max_list, tmp)
+tmp = join_dataframe(min_list, tmp)
 
 test_value_dataset = change_to_normalization(tmp)
 test_value_dataset = pd.DataFrame(test_value_dataset)
 test_value_dataset = test_value_dataset.iloc[:-2]
 test_value_dataset = test_value_dataset.values
-print(test_value_dataset.shape)
+
+# shape数を揃えるためにappendする
 input_test_data = []
 input_test_data.append(test_value_dataset)
 input_test_data = np.array(input_test_data)
 
-print(input_test_data.shape)
-#input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
-
-#print(input_train_data)
-#print(output_train_data)
-#print(input_train_data.shape)
-#print(output_train_data.shape)
-#print(time_list.shape)
 
 np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
@@ -268,7 +237,7 @@ history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1
 
 train_predict = model.predict(input_test_data)
 
-print(train_predict)
+print((train_predict[0][0]*(max_price-min_price))+min_price)
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
