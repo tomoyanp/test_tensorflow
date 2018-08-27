@@ -209,30 +209,51 @@ tmp = test_value_dataset.copy()
 tmp = pd.DataFrame(tmp)
 index = 0
 
-
-tmp = tmp.values
-max_list = max_list.values
-min_list = min_list.values
-
-print(tmp)
-print(len(tmp))
-
-print("#############################################")
-
-tmp = np.append(tmp, max_list)
-tmp = np.append(tmp, min_list)
-
-print(tmp)
-print(len(tmp))
-
-
-print("#############################################")
+dftmp = pd.DataFrame([])
+for col in tmp:
+    max_list = max_list.rename(columns={index: col})
+    min_list = min_list.rename(columns={index: col})
+    index = index + 1
+#    dftmp = dftmp.append(max_tmp) 
+#    dftmp = dftmp.append(min_tmp)
 
 print(max_list)
+print("####################################")
+print(min_list)
+
+tmp = tmp.append(max_list, ignore_index=True)
+tmp = tmp.append(min_list, ignore_index=True)
+print(tmp)
+#tmp = tmp.values
+#max_list = max_list.values
+#min_list = min_list.values
+
+#print("#############################################")
+#print(max_list)
+#print(len(tmp))
+
+
+#tmp = np.append(tmp, max_list)
+#tmp = np.append(tmp, min_list)
+
+#print(tmp)
+#print(len(tmp))
+
+
+#print("#############################################")
+
+#print(max_list)
 
 test_value_dataset = change_to_normalization(tmp)
-input_test_data = test_value_dataset.iloc[:-2]
+test_value_dataset = pd.DataFrame(test_value_dataset)
+test_value_dataset = test_value_dataset.iloc[:-2]
+test_value_dataset = test_value_dataset.values
+print(test_value_dataset.shape)
+input_test_data = []
+input_test_data.append(test_value_dataset)
+input_test_data = np.array(input_test_data)
 
+print(input_test_data.shape)
 #input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
 
 #print(input_train_data)
@@ -247,6 +268,7 @@ history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1
 
 train_predict = model.predict(input_test_data)
 
+print(train_predict)
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
@@ -265,7 +287,6 @@ ax1.plot(time_list, paint_right, label="Actual", color="red")
 plt.savefig('figure.png')
 
 
-print(train_predict)
 
 #train_predict = scaler.inverse_transform(train_predict)
 #print(train_predict)
