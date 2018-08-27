@@ -209,7 +209,7 @@ min_list = pd.DataFrame(min_list)
 max_list = max_list.T
 min_list = min_list.T
 
-test_base_time = change_to_ptime(base_time="2018-08-01 00:00:00")
+test_base_time = change_to_ptime(base_time="2018-07-31 00:00:00")
 test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=0, output_train_index=0)
 
 # 訓練データの最大、最小値を追加して、正規化する
@@ -235,7 +235,7 @@ np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
 history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-sql = "select end_price, insert_time from GBP_JPY_TABLE where insert_time < \'2018-08-02 00:00:00\' order by insert_time desc limit 2"
+sql = "select end_price, insert_time from GBP_JPY_day_TABLE where insert_time < \'2018-08-01 00:00:00\' order by insert_time desc limit 2"
 response = connector.select_sql(sql)
 end_price_list = []
 end_time_list = []
@@ -249,7 +249,7 @@ end_time_list.reverse()
 train_predict = model.predict(input_test_data)
 print("at %s end_price=%s" % (end_time_list[0], end_price_list[0]))
 print("at %s end_price=%s" % (end_time_list[1], end_price_list[1]))
-print("predict price=%s" % (train_predict[0][0]*(max_price-min_price))+min_price)
+print("predict price=%s" % ((train_predict[0][0]*(max_price-min_price))+min_price))
 
 paint_predict = []
 paint_right = []
