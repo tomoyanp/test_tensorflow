@@ -178,6 +178,8 @@ connector = MysqlConnector()
 train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 output_train_index = 1
 original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
+df = pd.DataFrame(value_dataset.copy())
+
 value_dataset = change_to_normalization(value_dataset)
 input_train_data, output_train_data, time_list = createDataset(value_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
 
@@ -187,7 +189,6 @@ min_list = []
 max_price = max(original_dataset["end"])
 min_price = min(original_dataset["end"])
 
-df = pd.DataFrame(value_dataset)
 for col in df:
     max_list.append(max(df[col]))
     min_list.append(min(df[col]))
@@ -206,12 +207,53 @@ test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector
 # 正規化後はdropする
 tmp = test_value_dataset.copy()
 tmp = pd.DataFrame(tmp)
-tmp = tmp.append(max_list)
-tmp = tmp.append(min_list)
+index = 0
+
+dftmp = pd.DataFrame([])
+for col in tmp:
+    max_list = max_list.rename(columns={index: col})
+    min_list = min_list.rename(columns={index: col})
+    index = index + 1
+#    dftmp = dftmp.append(max_tmp) 
+#    dftmp = dftmp.append(min_tmp)
+
+print(max_list)
+print("####################################")
+print(min_list)
+
+tmp = tmp.append(max_list, ignore_index=True)
+tmp = tmp.append(min_list, ignore_index=True)
+print(tmp)
+#tmp = tmp.values
+#max_list = max_list.values
+#min_list = min_list.values
+
+#print("#############################################")
+#print(max_list)
+#print(len(tmp))
+
+
+#tmp = np.append(tmp, max_list)
+#tmp = np.append(tmp, min_list)
+
+#print(tmp)
+#print(len(tmp))
+
+
+#print("#############################################")
+
+#print(max_list)
 
 test_value_dataset = change_to_normalization(tmp)
-input_test_data = test_value_dataset.iloc[:-2]
+test_value_dataset = pd.DataFrame(test_value_dataset)
+test_value_dataset = test_value_dataset.iloc[:-2]
+test_value_dataset = test_value_dataset.values
+print(test_value_dataset.shape)
+input_test_data = []
+input_test_data.append(test_value_dataset)
+input_test_data = np.array(input_test_data)
 
+print(input_test_data.shape)
 #input_test_data, output_test_data, test_time_list = createDataset(value_dataset, window_size=30, learning_span=0, output_train_index=0, output_flag=False)
 
 #print(input_train_data)
@@ -226,6 +268,7 @@ history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1
 
 train_predict = model.predict(input_test_data)
 
+print(train_predict)
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
@@ -244,7 +287,6 @@ ax1.plot(time_list, paint_right, label="Actual", color="red")
 plt.savefig('figure.png')
 
 
-print(train_predict)
 
 #train_predict = scaler.inverse_transform(train_predict)
 #print(train_predict)
