@@ -235,9 +235,22 @@ np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
 history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-train_predict = model.predict(input_test_data)
+sql = "select end_price, insert_time from GBP_JPY_TABLE where insert_time < \'2018-08-02 00:00:00\' order by insert_time desc limit 2"
+response = connector.select_sql(sql)
+end_price_list = []
+end_time_list = []
+for res in response:
+    end_price_list.append(res[0])
+    end_time_list.append(res[1])
 
-print((train_predict[0][0]*(max_price-min_price))+min_price)
+end_price_list.reverse()
+end_time_list.reverse()
+
+train_predict = model.predict(input_test_data)
+print("at %s end_price=%s" % (end_time_list[0], end_price_list[0]))
+print("at %s end_price=%s" % (end_time_list[1], end_price_list[1]))
+print("predict price=%s" % (train_predict[0][0]*(max_price-min_price))+min_price)
+
 paint_predict = []
 paint_right = []
 for i in range(len(train_predict)):
