@@ -153,10 +153,15 @@ def createInputDataset(value_dataset, window_size, learning_span):
 def createOutputDataset(value_dataset, original_dataset, window_size, learning_span, output_train_index):
     output_train_data = []
     time_list = []
-    for i in range(1, learning_span+output_train_index+1):
-        if i % ((window_size*i)+output_train_index) == 0:
-            output_traing_data.append(value_dataset[i][0])
-            time_list.append(original_dataset["time"][i])
+    output_train_data = value_dataset[-(window_size+learning_span):][0].copy()
+#    index = 1
+#    for i in range(1, learning_span+output_train_index+1):
+#        if i % ((window_size*index)+output_train_index) == 0:
+#            print((window_size*index)+output_train_index)
+#            print(i)
+#            output_train_data.append(value_dataset[i][0])
+#            time_list.append(original_dataset["time"][i])
+#            index = index + 1
 
     output_train_data = np.array(output_train_data)
     time_list = np.array(time_list)
