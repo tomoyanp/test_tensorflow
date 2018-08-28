@@ -184,6 +184,7 @@ def join_dataframe(sdf, ddf):
     return ddf
 
 connector = MysqlConnector()
+train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
 
 # 以降テスト

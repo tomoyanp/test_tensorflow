@@ -200,3 +200,25 @@ history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1
 json_string = model.to_json()
 open("model.json", "w").write(json_string)
 model.save_weights("model_weigths.hdf5")
+
+
+
+## 訓練データで予測
+train_predict = model.predict(input_train_data)
+paint_predict = []
+paint_right = []
+for i in range(len(train_predict)):
+    print(time_list[i])
+    paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
+    print((train_predict[i]*(max_price-min_price))+min_price)
+    paint_right.append((output_train_data[i]*(max_price-min_price))+min_price)
+    print((output_train_data[i]*(max_price-min_price))+min_price)
+
+
+### paint predict train data
+fig, ax1 = plt.subplots(1,1)
+ax1.plot(time_list, paint_predict, label="Predict", color="blue")
+ax1.plot(time_list, paint_right, label="Actual", color="red")
+
+plt.savefig('figure.png')
+
