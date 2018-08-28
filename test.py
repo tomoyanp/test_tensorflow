@@ -180,9 +180,13 @@ def join_dataframe(sdf, ddf):
     return ddf
 
 connector = MysqlConnector()
+
 train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
 output_train_index = 1
-original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
+window_size = 20
+learning_span = 300
+
+original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size, learning_span, output_train_index)
 df = pd.DataFrame(value_dataset.copy())
 
 value_dataset = change_to_normalization(value_dataset)
@@ -214,8 +218,12 @@ max_list = max_list.T
 min_list = min_list.T
 
 # predict用
+output_train_index = 0
+window_size = 20
+learning_span = 1
+
 test_base_time = change_to_ptime(base_time="2018-07-31 00:00:00")
-test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=1, output_train_index=0)
+test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size, learning_span, output_train_index)
 
 #### ここまで
 
@@ -232,7 +240,7 @@ test_value_dataset = pd.DataFrame(test_value_dataset)
 test_value_dataset = test_value_dataset.iloc[:-2]
 test_value_dataset = test_value_dataset.values
 
-input_test_dataset = createInputDataest(test_value_dataset, window_size=30, learning_span=1)
+input_test_dataset = createInputDataest(test_value_dataset, window_size, learning_span)
 
 # shape数を揃えるためにappendする
 #input_test_data = []
