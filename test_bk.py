@@ -136,7 +136,7 @@ def change_to_normalization(dataset):
     return normalization_list
 
  # 引数で与えられたndarrayをwindow_sizeで分割して返す(ndarray)
-def createDataset(dataset, window_size, learning_span, output_train_index, output_flag):
+def createDataset(dataset, original_dataset, window_size, learning_span, output_train_index, output_flag):
     input_train_data = []
     output_train_data = []
     time_list = []
@@ -154,15 +154,12 @@ def createDataset(dataset, window_size, learning_span, output_train_index, outpu
         try:
             if output_flag:
                 output_train_data.append(dataset[temp_index+output_train_index][0].copy())
-                print(dataset[temp_index+output_train_index][0].copy())
-                time_list.append(dataset["time"][temp_index+output_train_index][0].copy())
-                print(dataset["time"][temp_index+output_train_index][0].copy())
+                time_list.append(original_dataset["time"][temp_index+output_train_index])
                   
             else:
                 pass
 
         except Exception as e:
-            print(e)
             pass
 
     input_train_data = np.array(input_train_data)
@@ -194,7 +191,7 @@ original_dataset, value_dataset = getDataSet(train_base_time, connector, window_
 df = pd.DataFrame(value_dataset.copy())
 
 value_dataset = change_to_normalization(value_dataset)
-input_train_data, output_train_data, time_list = createDataset(value_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
+input_train_data, output_train_data, time_list = createDataset(value_dataset, original_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
 print(time_list)
 
 # testデータの正規化のために、最大値と最小値を取得しておく
@@ -251,14 +248,14 @@ for res in response:
 end_price_list.reverse()
 end_time_list.reverse()
 
-train_predict = model.predict(input_test_data)
+train_predict = model.predict(input_train_data)
 #print("at %s end_price=%s" % (end_time_list[0], end_price_list[0]))
 #print("at %s end_price=%s" % (end_time_list[1], end_price_list[1]))
 #print("predict price=%s" % ((train_predict[0][0]*(max_price-min_price))+min_price))
 
 paint_predict = []
 paint_right = []
-print(time_list)
+#print(time_list)
 for i in range(len(train_predict)):
     print(time_list[i])
     paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
