@@ -140,7 +140,7 @@ def createInputDataset(value_dataset, window_size, learning_span):
     input_train_data = []
     for i in range(0, learning_span):
         temp = []
-        for k in range((i, i+window_size):
+        for k in range(i, i+window_size):
             temp.append(value_dataset[k].copy())
 
         input_train_data.append(temp)
