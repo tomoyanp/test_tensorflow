@@ -188,8 +188,12 @@ output_train_index = 1
 original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
 df = pd.DataFrame(value_dataset.copy())
 
+max_price = max(original_dataset["end"])
+min_price = min(original_dataset["end"])
+
 value_dataset = change_to_normalization(value_dataset)
 input_train_data, output_train_data, time_list = createDataset(value_dataset, original_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
+
 
 
 np.random.seed(202)
@@ -199,7 +203,7 @@ history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1
 # モデルの保存
 json_string = model.to_json()
 open("model.json", "w").write(json_string)
-model.save_weights("model_weigths.hdf5")
+model.save_weights("model_weights.hdf5")
 
 
 

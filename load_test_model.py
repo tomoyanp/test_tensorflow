@@ -141,7 +141,7 @@ def createDataset(dataset, original_dataset, window_size, learning_span, output_
     input_train_data = []
     output_train_data = []
     time_list = []
-    for i in range(0, learning_span-(window_size+1)):
+    for i in range(0, learning_span-(window_size+output_train_index)):
 
         temp = []
         temp_index = 0
@@ -195,9 +195,12 @@ min_list = []
 max_price = max(original_dataset["end"])
 min_price = min(original_dataset["end"])
 
-for col in original_dataset:
-    max_list.append(max(original_dataset[col]))
-    min_list.append(min(original_dataset[col]))
+df = original_dataset.copy()
+del df["time"]
+
+for col in df:
+    max_list.append(max(df[col]))
+    min_list.append(min(df[col]))
 
 max_list = pd.DataFrame(max_list)
 min_list = pd.DataFrame(min_list)
@@ -207,7 +210,7 @@ max_list = max_list.T
 min_list = min_list.T
 
 test_base_time = change_to_ptime(base_time="2018-07-31 00:00:00")
-test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=0, output_train_index=0)
+test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=30, output_train_index=0)
 
 # 訓練データの最大、最小値を追加して、正規化する
 # 正規化後はdropする
@@ -230,7 +233,8 @@ input_test_data = np.array(input_test_data)
 model_filename = "model.json"
 weights_filename = "model_weights.hdf5"
 
-model = model_from_json(model_filename)
+json_string = open(model_filename).read()
+model = model_from_json(json_string)
 model.load_weights(weights_filename)
 
 predict = model.predict(input_test_data)
