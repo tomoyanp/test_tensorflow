@@ -75,7 +75,7 @@ def getDataSet(base_time, con, window_size, learning_span, output_train_index):
     target_time = base_time - timedelta(days=1)
     sql = "select max_price, min_price, start_price, end_price, insert_time from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
     response = con.select_sql(sql)
-    print(sql)
+    #print(sql)
 
     max_price_list = []
     min_price_list = []
@@ -107,8 +107,8 @@ def getDataSet(base_time, con, window_size, learning_span, output_train_index):
 
         i = i + 1
 
-        print(len(end_price_list))
-        print(len(sma1d20_list))
+        #print(len(end_price_list))
+        #print(len(sma1d20_list))
 
     sma1d20_list.reverse()
 
@@ -136,7 +136,7 @@ def change_to_normalization(dataset):
     return normalization_list
 
  # 引数で与えられたndarrayをwindow_sizeで分割して返す(ndarray)
-def createDataset(dataset, window_size, learning_span, output_train_index, output_flag):
+def createDataset(dataset, original_dataset, window_size, learning_span, output_train_index, output_flag):
     input_train_data = []
     output_train_data = []
     time_list = []
@@ -146,7 +146,7 @@ def createDataset(dataset, window_size, learning_span, output_train_index, outpu
         temp_index = 0
         for k in range((i-window_size), i):
             temp.append(dataset[k].copy())
-            print(dataset[k])
+            #print(dataset[k])
             temp_index = k
 
 
@@ -154,7 +154,8 @@ def createDataset(dataset, window_size, learning_span, output_train_index, outpu
         try:
             if output_flag:
                 output_train_data.append(dataset[temp_index+output_train_index][0].copy())
-                time_list.append(dataset["time"][temp_index+output_train_index])
+                time_list.append(original_dataset["time"][temp_index+output_train_index])
+                  
             else:
                 pass
 
@@ -190,7 +191,8 @@ original_dataset, value_dataset = getDataSet(train_base_time, connector, window_
 df = pd.DataFrame(value_dataset.copy())
 
 value_dataset = change_to_normalization(value_dataset)
-input_train_data, output_train_data, time_list = createDataset(value_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
+input_train_data, output_train_data, time_list = createDataset(value_dataset, original_dataset, window_size=30, learning_span=300, output_train_index=1, output_flag=True)
+print(time_list)
 
 # testデータの正規化のために、最大値と最小値を取得しておく
 max_list = []
@@ -209,7 +211,7 @@ min_list = pd.DataFrame(min_list)
 max_list = max_list.T
 min_list = min_list.T
 
-test_base_time = change_to_ptime(base_time="2018-08-01 00:00:00")
+test_base_time = change_to_ptime(base_time="2018-07-31 00:00:00")
 test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=0, output_train_index=0)
 
 # 訓練データの最大、最小値を追加して、正規化する
@@ -235,7 +237,7 @@ np.random.seed(202)
 model = build_model(input_train_data, output_size=1, neurons=20)
 history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
-sql = "select end_price, insert_time from GBP_JPY_TABLE where insert_time < \'2018-08-02 00:00:00\' order by insert_time desc limit 2"
+sql = "select end_price, insert_time from GBP_JPY_day_TABLE where insert_time < \'2018-08-01 00:00:00\' order by insert_time desc limit 2"
 response = connector.select_sql(sql)
 end_price_list = []
 end_time_list = []
@@ -246,13 +248,14 @@ for res in response:
 end_price_list.reverse()
 end_time_list.reverse()
 
-train_predict = model.predict(input_test_data)
-print("at %s end_price=%s" % (end_time_list[0], end_price_list[0]))
-print("at %s end_price=%s" % (end_time_list[1], end_price_list[1]))
-print("predict price=%s" % (train_predict[0][0]*(max_price-min_price))+min_price)
+train_predict = model.predict(input_train_data)
+#print("at %s end_price=%s" % (end_time_list[0], end_price_list[0]))
+#print("at %s end_price=%s" % (end_time_list[1], end_price_list[1]))
+#print("predict price=%s" % ((train_predict[0][0]*(max_price-min_price))+min_price))
 
 paint_predict = []
 paint_right = []
+#print(time_list)
 for i in range(len(train_predict)):
     print(time_list[i])
     paint_predict.append((train_predict[i]*(max_price-min_price))+min_price)
