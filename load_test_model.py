@@ -35,159 +35,13 @@ import json
 from get_indicator import getBollingerWrapper
 from mysql_connector import MysqlConnector
 
-def build_model(inputs, output_size, neurons, activ_func="linear", dropout=0.25, loss="mae", optimizer="adam"):
-    model = Sequential()
-
-    model.add(LSTM(neurons, input_shape=(inputs.shape[1], inputs.shape[2])))
-    model.add(Dropout(dropout))
-    model.add(Dense(units=output_size))
-    model.add(Activation(activ_func))
-    model.compile(loss=loss, optimizer=optimizer)
-
-    return model
-
-
-def iso_jp(iso):
-    date = None
-    try:
-        date = datetime.strptime(iso, '%Y-%m-%dT%H:%M:%S.%fZ')
-        date = pytz.utc.localize(date).astimezone(pytz.timezone("Asia/Tokyo"))
-    except ValueError:
-        try:
-            date = datetime.strptime(iso, '%Y-%m-%dT%H:%M:%S.%f%z')
-            date = dt.astimezone(pytz.timezone("Asia/Tokyo"))
-        except ValueError:
-            pass
-    return date
- 
-def date_string(date):
-    if date is None:
-        return ''
-    return date.strftime('%Y/%m/%d %H:%M:%S')
-
-
-# 必要なデータを取得してDataFrameに突っ込んで返す
-def getDataSet(base_time, con, window_size, learning_span, output_train_index):
-    ### get daily dataset
-
-    length = learning_span + output_train_index
-
-    instrument = "GBP_JPY"
-    target_time = base_time - timedelta(days=1)
-    sql = "select max_price, min_price, start_price, end_price, insert_time from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, "day", target_time, length) 
-    response = con.select_sql(sql)
-    #print(sql)
-
-    max_price_list = []
-    min_price_list = []
-    start_price_list = []
-    end_price_list = []
-    time_list = []
-    for res in response:
-        max_price_list.append(res[0])
-        min_price_list.append(res[1])
-        start_price_list.append(res[2])
-        end_price_list.append(res[3])
-        time_list.append(res[4])
-
-    max_price_list.reverse()
-    min_price_list.reverse()
-    start_price_list.reverse()
-    end_price_list.reverse()
-    time_list.reverse()
-    
-    sma1d20_list = []
-    i = 0
-    while len(end_price_list) != len(sma1d20_list):
-        tmp_time = target_time - timedelta(days=i)
-        dataset = getBollingerWrapper(tmp_time, instrument,  table_type="day", window_size=20, connector=con, sigma_valiable=2, length=0)
-        try:
-            sma1d20_list.append(dataset["base_lines"][-1])
-        except Exception as e:
-            pass
-
-        i = i + 1
-
-        #print(len(end_price_list))
-        #print(len(sma1d20_list))
-
-    sma1d20_list.reverse()
-
-    original_dataset = {"end": end_price_list,
-               "start": start_price_list,
-               "max": max_price_list,
-               "min": min_price_list,
-               "sma1d20": sma1d20_list,
-               "time": time_list}
-
-    value_dataset = {"end": end_price_list,
-               "start": start_price_list,
-               "max": max_price_list,
-               "min": min_price_list,
-               "sma1d20": sma1d20_list}
-
-    return original_dataset, value_dataset
-
-def change_to_normalization(dataset):
-    tmp_df = pd.DataFrame(dataset)
-    np_list = np.array(tmp_df)
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    normalization_list = scaler.fit_transform(np_list)
-
-    return normalization_list
-
- # 引数で与えられたndarrayをwindow_sizeで分割して返す(ndarray)
-def createDataset(dataset, original_dataset, window_size, learning_span, output_train_index, output_flag):
-    input_train_data = []
-    output_train_data = []
-    time_list = []
-    for i in range(0, learning_span-(window_size+output_train_index)):
-
-        temp = []
-        temp_index = 0
-        for k in range(i, i+window_size):
-            temp.append(dataset[k].copy())
-            temp_index = k
-
-        input_train_data.append(temp)
-        try:
-            if output_flag:
-                output_train_data.append(dataset[temp_index+output_train_index][0].copy())
-                time_list.append(original_dataset["time"][temp_index+output_train_index])
-                  
-            else:
-                pass
-
-        except Exception as e:
-            pass
-
-    input_train_data = np.array(input_train_data)
-    output_train_data = np.array(output_train_data)
-    time_list = np.array(time_list)
-
-    return input_train_data, output_train_data, time_list
-
-
-def change_to_ptime(base_time):
-    base_time = datetime.strptime(base_time, "%Y-%m-%d %H:%M:%S")
-    return base_time
-
-
-def join_dataframe(sdf, ddf):
-    index = 0
-    for col in ddf:
-        sdf = sdf.rename(columns={index: col})
-        index = index + 1
-    
-    ddf = ddf.append(sdf, ignore_index=True)
-
-    return ddf
+from tensor_lib import change_to_ptime, getDataset, change_to_normalization, createTestDataset, join_dataframe
 
 connector = MysqlConnector()
-train_base_time = change_to_ptime(base_time="2018-07-01 00:00:00")
-original_dataset, value_dataset = getDataSet(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1)
+base_time = "2018-07-01 00:00:00"
+train_base_time = change_to_ptime(base_time)
+original_dataset, value_dataset = getDataset(train_base_time, connector, window_size=30, learning_span=300, output_train_index=1, table_layout="day")
 
-# 以降テスト
 
 # testデータの正規化のために、最大値と最小値を取得しておく
 max_list = []
@@ -209,8 +63,14 @@ min_list = pd.DataFrame(min_list)
 max_list = max_list.T
 min_list = min_list.T
 
-test_base_time = change_to_ptime(base_time="2018-07-31 00:00:00")
-test_original_dataset, test_value_dataset = getDataSet(test_base_time, connector, window_size=30, learning_span=30, output_train_index=0)
+window_size = 30
+learning_span = 31
+output_train_index = 0
+table_layout = "day"
+base_time = "2018-07-31 00:00:00"
+test_base_time = change_to_ptime(base_time)
+
+test_original_dataset, test_value_dataset = getDataset(test_base_time, connector, window_size, learning_span, output_train_index, table_layout)
 
 # 訓練データの最大、最小値を追加して、正規化する
 # 正規化後はdropする
@@ -225,10 +85,7 @@ test_value_dataset = pd.DataFrame(test_value_dataset)
 test_value_dataset = test_value_dataset.iloc[:-2]
 test_value_dataset = test_value_dataset.values
 
-# shape数を揃えるためにappendする
-input_test_data = []
-input_test_data.append(test_value_dataset)
-input_test_data = np.array(input_test_data)
+input_test_data = createTestDataset(test_value_dataset, window_size, learning_span)
 
 model_filename = "model.json"
 weights_filename = "model_weights.hdf5"
@@ -239,7 +96,10 @@ model.load_weights(weights_filename)
 
 predict = model.predict(input_test_data)
 
+print(predict.shape)
+print(predict)
 print((predict[0][0]*(max_price-min_price))+min_price)
+print((predict[1][0]*(max_price-min_price))+min_price)
 
 #sql = "select end_price, insert_time from GBP_JPY_day_TABLE where insert_time < \'2018-08-01 00:00:00\' order by insert_time desc limit 2"
 
