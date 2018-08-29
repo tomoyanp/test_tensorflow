@@ -83,6 +83,7 @@ def getDataset(base_time, con, window_size, learning_span, output_train_index, t
 
     sql = "select max_price, min_price, start_price, end_price, insert_time from %s_%s_TABLE where insert_time < \'%s\' order by insert_time desc limit %s" % (instrument, table_layout, target_time, length) 
     response = con.select_sql(sql)
+    #print(sql)
 
     max_price_list = []
     min_price_list = []
@@ -102,50 +103,41 @@ def getDataset(base_time, con, window_size, learning_span, output_train_index, t
     end_price_list.reverse()
     time_list.reverse()
     
-    dataset_sma20 = getBollingerWrapper(target_time, instrument,  table_type=table_layout, window_size=20, connector=con, sigma_valiable=2, length=(length-1))
-    dataset_sma40 = getBollingerWrapper(target_time, instrument,  table_type=table_layout, window_size=40, connector=con, sigma_valiable=2, length=(length-1))
-    dataset_sma80 = getBollingerWrapper(target_time, instrument,  table_type=table_layout, window_size=80, connector=con, sigma_valiable=2, length=(length-1))
-    dataset_bollinger25 = getBollingerWrapper(target_time, instrument,  table_type=table_layout, window_size=21, connector=con, sigma_valiable=2.5, length=(length-1))
+    sma1d20_list = []
+    i = 0
+    while len(end_price_list) != len(sma1d20_list):
+        if table_layout == "day":
+            tmp_time = target_time - timedelta(days=i)
+        elif table_layout == "1h":
+            tmp_time = target_time - timedelta(hours=i)
+        elif table_layout == "5m":
+            tmp_time = target_time - timedelta(minuites=(i*5))
+        elif table_layout == "1m":
+            tmp_time = target_time - timedelta(minuites=i)
 
-    sma20_list = dataset_sma20["base_lines"][-1*length:]
-    sma40_list = dataset_sma40["base_lines"][-1*length:]
-    sma80_list = dataset_sma80["base_lines"][-1*length:]
-    upper25_list = dataset_bollinger25["upper_sigmas"][-1*length:]
-    lower25_list = dataset_bollinger25["lower_sigmas"][-1*length:]
+        dataset = getBollingerWrapper(tmp_time, instrument,  table_type=table_layout, window_size=20, connector=con, sigma_valiable=2, length=0)
+        try:
+            sma1d20_list.append(dataset["base_lines"][-1])
+        except Exception as e:
+            pass
+
+        i = i + 1
 
 
-    print(len(max_price_list))
-    print(len(min_price_list))
-    print(len(start_price_list))
-    print(len(end_price_list))
-    print(len(time_list))
-
-    print(len(sma20_list)) 
-    print(len(sma40_list)) 
-    print(len(sma80_list)) 
-    print(len(upper25_list)) 
-    print(len(lower25_list)) 
+    sma1d20_list.reverse()
 
     original_dataset = {"end": end_price_list,
                "start": start_price_list,
                "max": max_price_list,
                "min": min_price_list,
-               "sma20": sma20_list,
-               "sma40": sma40_list,
-               "sma80": sma80_list,
-               "upper25": upper25_list,
-               "lower25": lower25_list,
+               "sma1d20": sma1d20_list,
                "time": time_list}
 
     value_dataset = {"end": end_price_list,
                "start": start_price_list,
                "max": max_price_list,
                "min": min_price_list,
-               "sma20": sma20_list,
-               "sma40": sma40_list,
-               "sma80": sma80_list,
-               "upper25": upper25_list,
-               "lower25": lower25_list}
+               "sma1d20": sma1d20_list}
 
     return original_dataset, value_dataset
 
