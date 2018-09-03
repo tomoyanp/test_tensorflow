@@ -28,8 +28,8 @@ def train_save_model_wrapper(base_time, table_layout, output_train_index, learni
     input_train_data, output_train_data, time_list = createTrainDataset(value_dataset, original_dataset, window_size, learning_span, output_train_index)
 
     np.random.seed(202)
-    model = build_model(input_train_data, output_size=1, neurons=200)
-    history = model.fit(input_train_data, output_train_data, epochs=500, batch_size=1, verbose=2, shuffle=True)
+    model = build_model(input_train_data, output_size=1, neurons=20)
+    history = model.fit(input_train_data, output_train_data, epochs=50, batch_size=1, verbose=2, shuffle=True)
 
     # モデルの保存
     json_string = model.to_json()

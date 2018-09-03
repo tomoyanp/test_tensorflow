@@ -63,11 +63,11 @@ min_list = pd.DataFrame(min_list)
 max_list = max_list.T
 min_list = min_list.T
 
-window_size = 30
-learning_span = 31
-output_train_index = 0
-table_layout = "day"
-base_time = "2018-07-31 00:00:00"
+window_size = 24
+learning_span = 24*60
+output_train_index = 8
+table_layout = "1h"
+base_time = "2018-07-31 07:00:00"
 test_base_time = change_to_ptime(base_time)
 
 test_original_dataset, test_value_dataset = getDataset(test_base_time, connector, window_size, learning_span, output_train_index, table_layout)
@@ -87,8 +87,8 @@ test_value_dataset = test_value_dataset.values
 
 input_test_data = createTestDataset(test_value_dataset, window_size, learning_span)
 
-model_filename = "model.json"
-weights_filename = "model_weights.hdf5"
+model_filename = "model_1h.json"
+weights_filename = "weight_1h.hdf5"
 
 json_string = open(model_filename).read()
 model = model_from_json(json_string)
