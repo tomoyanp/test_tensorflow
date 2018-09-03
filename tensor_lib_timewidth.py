@@ -30,7 +30,6 @@ from keras.layers import Dropout
 from sklearn.preprocessing import MinMaxScaler
 
 import json
-import pickle
 
 from get_indicator import getBollingerWrapper
 from mysql_connector import MysqlConnector
@@ -156,14 +155,7 @@ def change_to_normalization(dataset):
     scaler = MinMaxScaler(feature_range=(0, 1))
     normalization_list = scaler.fit_transform(np_list)
 
-    return normalization_list, scaler
-
-def save_to_normalization_model(model, filename):
-    pickle.dump(model, open(filename, "wb"))
-
-def load_from_normalization_model(filename):
-    model = pickle.load(open(filename, "rb"))
-    return model
+    return normalization_list
 
  # 引数で与えられたndarrayをwindow_sizeで分割して返す(ndarray)
 def createTrainDataset(dataset, original_dataset, window_size, learning_span, output_train_index):
