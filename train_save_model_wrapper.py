@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 plt.switch_backend("agg")
 
 from mysql_connector import MysqlConnector
-from tensor_lib import change_to_ptime, getDataset, change_to_normalization, createTrainDataset, build_model
+from tensor_lib import change_to_ptime, getDataset, change_to_normalization, createTrainDataset, build_model, save_to_normalization_model
 
 
 def train_save_model_wrapper(base_time, table_layout, output_train_index, learning_span, window_size, model_filename, weight_filename, normalization_filename, figure_filename):

@@ -27,4 +27,4 @@ weight_filename = "weight_1h.hdf5"
 normalization_filename = "normalization_1h.json"
 figure_filename = "figure_1h.png"
 
-train_save_model_wrapper(base_time, table_layout, output_train_index, learning_span, window_size, model_filename, weight_filename, normalization_filename, figure_filename)
+#train_save_model_wrapper(base_time, table_layout, output_train_index, learning_span, window_size, model_filename, weight_filename, normalization_filename, figure_filename)
